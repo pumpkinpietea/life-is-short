@@ -66,8 +66,9 @@ Create scoped issues and branches when those outcomes become ready. Link require
 
 ## Current handoff
 
-- Working branch: `docs/v0.1-specification`; foundation implementation will use an issue-linked branch.
+- Specifications were merged through PR #6. Foundation branch: `feat/2-foundation`.
 - Xcode 27.1 and an iOS 27 simulator are available locally.
-- No application feature has passed runtime verification yet.
+- Shared domain/storage/selection/rotation formatting: 12 Swift Testing tests passed locally, including a synthetic 200-record library and per-component live-format boundaries.
+- App/widget integration and simulator UI verification are in progress and will be recorded separately.
 - First checkpoint: native time-data-source rendering of the complete Type 2 countdown, followed by domain/storage tests and app/widget integration.
 - Preserve the distinction between simulator verification, real-device validation, and App Store availability.
