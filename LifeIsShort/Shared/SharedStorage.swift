@@ -22,14 +22,18 @@ enum SharedStorage {
 }
 
 enum PhotoAssets {
-    static func importImage(at sourceURL: URL, store: LibraryFileStore) throws -> String {
-        guard let source = CGImageSourceCreateWithURL(sourceURL as CFURL, nil),
-              let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+    static func thumbnail(at sourceURL: URL, maximumPixelSize: Int) -> CGImage? {
+        guard let source = CGImageSourceCreateWithURL(sourceURL as CFURL, nil) else { return nil }
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, [
                 kCGImageSourceCreateThumbnailFromImageAlways: true,
                 kCGImageSourceCreateThumbnailWithTransform: true,
-                kCGImageSourceThumbnailMaxPixelSize: 1_280,
+                kCGImageSourceThumbnailMaxPixelSize: maximumPixelSize,
                 kCGImageSourceShouldCacheImmediately: true
-              ] as CFDictionary) else { throw CocoaError(.fileReadCorruptFile) }
+              ] as CFDictionary)
+    }
+
+    static func importImage(at sourceURL: URL, store: LibraryFileStore) throws -> String {
+        guard let image = thumbnail(at: sourceURL, maximumPixelSize: 1_280) else { throw CocoaError(.fileReadCorruptFile) }
         try FileManager.default.createDirectory(at: store.photosURL, withIntermediateDirectories: true)
         let name = UUID().uuidString + ".jpg"
         let url = store.photosURL.appendingPathComponent(name)

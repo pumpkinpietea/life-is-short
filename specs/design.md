@@ -2,7 +2,7 @@
 
 Status: Implementation design; development authorized on 2026-10-25
 
-The confirmed product requirements are in [requirements.md](requirements.md). Architecture and interface choices below are proposals unless that document identifies them as confirmed requirements.
+The confirmed product requirements are in [requirements.md](requirements.md). Architecture and interface decisions below were selected within the accepted scope under the delegated development authority. Runtime findings and remaining verification are recorded explicitly.
 
 ## Repository baseline before implementation
 
@@ -58,7 +58,7 @@ Use a widget link to open the milestone list, as confirmed in R-04. This destina
 
 Keep a small shared domain layer and separate app and widget entry points. Avoid a third-party dependency unless a concrete requirement cannot be met with Apple frameworks.
 
-| Component | Responsibility | Proposed Apple facilities |
+| Component | Responsibility | Apple facilities |
 | --- | --- | --- |
 | App UI | Milestone list, editor, system photo selection, previews | SwiftUI, PhotosUI |
 | Domain model | Milestone values, validation, age-to-date calculation, duration rules | Foundation |
@@ -98,7 +98,7 @@ Search and filtering are useful future interface options as the library grows; t
 ### Persistence and photos
 
 - Use the system photo picker for an explicitly selected image, rather than requesting general photo-library access.
-- Import and resize an image into application-managed local storage. The widget must not depend on subsequently reading the original library asset.
+- Import and resize an image into application-managed local storage (maximum edge 1,280 pixels). The widget must not depend on subsequently reading the original library asset. Downsample again to a maximum edge of 768 pixels for widget rendering; the simulator rejected a 1,200-by-900 image as exceeding the small-widget archive image budget.
 - Treat a canceled selection as no change. If importing fails, retain the existing photo or the built-in background and show a recoverable error in the app.
 - A cloud-only photo may need an OS-managed download during import; the offline guarantee starts after a successful import.
 - Publish a new image asset before atomically replacing the metadata snapshot that refers to it.
@@ -123,7 +123,7 @@ Implementation defaults selected under the delegated development authority:
 
 - Use Gregorian calendar arithmetic to calculate the target birthday from a birth date and integer target age.
 - Resolve a nonexistent local time at a daylight-saving transition to the next valid time, and display the resolved value before saving.
-- For a repeated local time, propose the first occurrence and display the resolved zone/offset before saving.
+- For a repeated local time, use the first occurrence and display the resolved zone/offset before saving.
 
 These are convenience policies for a user-defined milestone, not legal definitions of age. Cover them with deterministic checks and show the resolved target before saving.
 

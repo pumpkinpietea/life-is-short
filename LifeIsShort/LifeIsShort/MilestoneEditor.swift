@@ -173,11 +173,12 @@ struct MilestoneEditor: View {
                 importing = true
                 defer { if photoItem == item { importing = false } }
                 do {
-                    if let photo = try await item.loadTransferable(type: PickedPhoto.self) {
-                        defer { try? FileManager.default.removeItem(at: photo.url) }
-                        let filename = try await model.importPhoto(at: photo.url)
-                        if !Task.isCancelled && photoItem == item { photoFilename = filename }
+                    guard let photo = try await item.loadTransferable(type: PickedPhoto.self) else {
+                        throw CocoaError(.fileReadCorruptFile)
                     }
+                    defer { try? FileManager.default.removeItem(at: photo.url) }
+                    let filename = try await model.importPhoto(at: photo.url)
+                    if !Task.isCancelled && photoItem == item { photoFilename = filename }
                 } catch {
                     if !Task.isCancelled {
                         errorMessage = Localized.text("The photo could not be imported. Please try another photo or check your connection.")

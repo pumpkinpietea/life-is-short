@@ -1,21 +1,23 @@
 import SwiftUI
-import UIKit
 
 struct MilestoneBackground: View {
     var milestone: Milestone?
+    var maximumPhotoPixelSize = 1_280
     var body: some View {
         GeometryReader { geometry in
+            let width = geometry.size.width.isFinite ? max(0, geometry.size.width) : 0
+            let height = geometry.size.height.isFinite ? max(0, geometry.size.height) : 0
             ZStack {
                 LinearGradient(colors: [Color(red: 0.10, green: 0.29, blue: 0.31), Color(red: 0.04, green: 0.11, blue: 0.19)],
                                startPoint: .topLeading, endPoint: .bottomTrailing)
                 if let url = SharedStorage.photoURL(milestone?.photoFilename),
-                   let image = UIImage(contentsOfFile: url.path) {
-                    Image(uiImage: image).resizable().scaledToFill()
-                        .frame(width: geometry.size.width, height: geometry.size.height).clipped()
+                   let image = PhotoAssets.thumbnail(at: url, maximumPixelSize: maximumPhotoPixelSize) {
+                    Image(decorative: image, scale: 1).resizable().scaledToFill()
+                        .frame(width: width, height: height).clipped()
                 } else {
                     Circle().fill(.white.opacity(0.045))
-                        .frame(width: geometry.size.width * 0.95)
-                        .offset(x: geometry.size.width * 0.45, y: -geometry.size.height * 0.28)
+                        .frame(width: width * 0.95)
+                        .offset(x: width * 0.45, y: -height * 0.28)
                 }
                 LinearGradient(colors: [.black.opacity(0.12), .black.opacity(0.68)], startPoint: .top, endPoint: .bottom)
             }
@@ -56,15 +58,16 @@ struct CountdownLabel: View {
 
     var body: some View {
         GeometryReader { geometry in
+            let width = geometry.size.width.isFinite ? max(0, geometry.size.width) : 0
             if milestone.countdownMode == .clock {
                 VStack(alignment: .leading, spacing: 3) {
                     dayText
                         .font(.system(size: compact ? 27 : 35, weight: .medium, design: .rounded))
-                        .frame(width: geometry.size.width, alignment: .leading)
+                        .frame(width: width, alignment: .leading)
                         .minimumScaleFactor(0.55).lineLimit(1)
                     clockText
                         .font(.system(size: compact ? 21 : 27, weight: .regular, design: .rounded))
-                        .frame(width: geometry.size.width, alignment: .leading)
+                        .frame(width: width, alignment: .leading)
                         .foregroundStyle(.white.opacity(0.85)).lineLimit(1).minimumScaleFactor(0.6)
                 }.monospacedDigit()
             } else {
@@ -74,7 +77,7 @@ struct CountdownLabel: View {
                     .foregroundStyle(.white.opacity(0.85))
                 Text("\(amount) \(label)")
                     .font(.system(size: compact ? 45 : 58, weight: .medium, design: .rounded))
-                    .frame(width: geometry.size.width, alignment: .leading)
+                    .frame(width: width, alignment: .leading)
                     .minimumScaleFactor(0.35).lineLimit(1).monospacedDigit()
             }
         }
@@ -103,9 +106,10 @@ struct MilestoneCardContent: View {
                 CountdownLabel(milestone: milestone, presentationDate: presentationDate, compact: compact)
             } else {
                 Image(systemName: "sparkles").font(.title2)
-                Text("Make today count.").font(.headline)
+                Text("Make today count.").font(compact ? .subheadline.weight(.semibold) : .headline)
+                    .lineLimit(2).minimumScaleFactor(0.8)
                 Text("Choose milestones in the app.")
-                    .font(.caption).foregroundStyle(.white.opacity(0.8))
+                    .font(.caption).foregroundStyle(.white.opacity(0.8)).lineLimit(3).minimumScaleFactor(0.8)
             }
         }
         .foregroundStyle(.white)

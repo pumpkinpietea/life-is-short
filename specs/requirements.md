@@ -1,6 +1,6 @@
 # Life Is Short: v0.1 Requirements
 
-Status: Accepted v0.1 scope; implementation in progress
+Status: Accepted v0.1 scope; development build implemented, device and release validation pending
 
 These specifications record the product decisions made during requirements discovery. The developer authorized implementation on 2026-10-25. Implementation choices are identified separately from confirmed product decisions.
 
@@ -99,7 +99,7 @@ The v0.1 delivery goal is public availability on the App Store. Local builds and
 
 ## Growth and design direction
 
-Support future growth to libraries of 100 to 200 milestones without representing the library as three fixed storage slots. Keep stable milestone identities, saved order, photo references, and widget visibility separate from the three-item widget-selection policy. Validate representative larger libraries during implementation; no performance result is claimed yet.
+Support future growth to libraries of 100 to 200 milestones without representing the library as three fixed storage slots. Keep stable milestone identities, saved order, photo references, and widget visibility separate from the three-item widget-selection policy. A synthetic 200-record library has passed persistence and basic simulator editing checks; see tasks.md for evidence and hardware validation still required.
 
 The fourth-selection replacement interaction is confirmed in R-04. Exact list layout remains a design proposal in [design.md](design.md).
 
@@ -160,9 +160,9 @@ These boundaries keep the first release focused; they do not define a future roa
 - Widget-tap navigation has been confirmed as opening the milestone list and incorporated into R-04. The earlier proposal to open the displayed milestone's editor does not apply.
 - P-06 (local operation and privacy) has been accepted and incorporated into R-06.
 - The fourth-selection replacement flow is accepted and incorporated into R-04 and AC-22.
-- Verify the exact Type 2 day-plus-time format, zero stopping, long durations, and localization with the supported live-text APIs inside a real widget. A documentation example is not proof of the complete format.
+- Native small/medium widgets have demonstrated Type 2 long durations, zero stopping, and the 24-hour boundary on the iOS 27 simulator. Complete hardware and widget-language review remains tracked in issue #10; see tasks.md.
 - The February 29 birthday policy has been accepted and incorporated into R-01. Review remaining daylight-saving-time handling in [design.md](design.md).
-- Review widget layout previews once implementation is authorized. Exact typography, photo framing, and overlay treatments remain design work.
+- App layouts in all three languages and native English small/medium widgets have been inspected. Broader accessibility, language-override, and hardware review remains tracked in issue #10.
 
 ## Related documents
 

@@ -34,7 +34,7 @@ struct MilestoneWidgetView: View {
 
     var body: some View {
         MilestoneCardContent(milestone: entry.milestone, compact: family == .systemSmall, presentationDate: entry.date)
-            .containerBackground(for: .widget) { MilestoneBackground(milestone: entry.milestone) }
+            .containerBackground(for: .widget) { MilestoneBackground(milestone: entry.milestone, maximumPhotoPixelSize: 768) }
             .widgetURL(SharedStorage.appURL)
     }
 }

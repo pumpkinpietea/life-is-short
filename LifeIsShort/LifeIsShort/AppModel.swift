@@ -84,6 +84,7 @@ enum DebugFixtures {
                 countdownMode: .clock, isVisibleInWidget: true
             )])
         }
+        if args.contains("-seed-rotation-proof") { library.rotationAnchor = .now.addingTimeInterval(-570) }
         try store.save(library)
         WidgetCenter.shared.reloadAllTimelines()
     }

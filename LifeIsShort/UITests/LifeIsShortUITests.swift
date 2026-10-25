@@ -183,9 +183,44 @@ final class LifeIsShortUITests: XCTestCase {
         XCUIDevice.shared.press(.home)
         let home = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let photoWidget = home.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "A photo milestone")).firstMatch
-        if !photoWidget.waitForExistence(timeout: 5) { placeWidget(in: home) }
+        if !photoWidget.waitForExistence(timeout: 40) { placeWidget(in: home) }
         XCTAssertTrue(photoWidget.waitForExistence(timeout: 40), home.debugDescription)
         capture("Imported photo Home Screen widget", app: home)
+        placeWidget(in: home, medium: true)
+        XCTAssertTrue(photoWidget.waitForExistence(timeout: 40), home.debugDescription)
+        capture("Imported photo medium Home Screen widget", app: home)
+        app.activate()
+    }
+
+    func testLargeLibraryRemainsEditable() throws {
+        let app = launch(seed: true, extra: ["-seed-200"])
+        capture("Synthetic 200 milestone library", app: app)
+        let first = row("A new adventure", in: app)
+        reveal(first, in: app); first.tap()
+        let title = app.textFields["milestoneTitle"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        title.tap()
+        title.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "A new adventure".count))
+        title.typeText("A library with 200 milestones")
+        app.buttons["saveMilestone"].tap()
+        app.terminate()
+        let reopened = launch(preserve: true)
+        XCTAssertTrue(row("A library with 200 milestones", in: reopened).waitForExistence(timeout: 5))
+        capture("Edited 200 milestone library after relaunch", app: reopened)
+    }
+
+    func testScheduledWidgetRotation() throws {
+        let app = launch(seed: true, extra: ["-seed-rotation-proof"])
+        XCUIDevice.shared.press(.home)
+        let home = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        func widget(_ title: String) -> XCUIElement {
+            home.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", title)).firstMatch
+        }
+        if !widget("A new adventure").waitForExistence(timeout: 15) { placeWidget(in: home) }
+        XCTAssertTrue(widget("A new adventure").waitForExistence(timeout: 10), home.debugDescription)
+        capture("Widget rotation first milestone", app: home)
+        XCTAssertTrue(widget("The next chapter").waitForExistence(timeout: 45), home.debugDescription)
+        capture("Widget rotation second milestone", app: home)
         app.activate()
     }
 
@@ -213,7 +248,25 @@ final class LifeIsShortUITests: XCTestCase {
         expectation(for: zero, evaluatedWith: nil)
         waitForExpectations(timeout: 45)
         capture("Widget stopped at zero", app: home)
-        crossing.activate()
+        let observedZero = Date.now
+        expectation(for: NSPredicate { _, _ in
+            Date.now.timeIntervalSince(observedZero) > 3 && widget.label.contains("00:00:00")
+        }, evaluatedWith: nil)
+        waitForExpectations(timeout: 6)
+        crossing.terminate()
+        let dayBoundary = launch(extra: ["-seed-day-crossing"])
+        XCUIDevice.shared.press(.home)
+        expectation(for: NSPredicate { _, _ in
+            widget.exists && widget.label.contains("1 day")
+        }, evaluatedWith: nil)
+        waitForExpectations(timeout: 15)
+        capture("Widget before 24 hour boundary", app: home)
+        expectation(for: NSPredicate { _, _ in
+            widget.exists && widget.label.contains("0 days") && widget.label.contains("23:59:")
+        }, evaluatedWith: nil)
+        waitForExpectations(timeout: 40)
+        capture("Widget after 24 hour boundary", app: home)
+        dayBoundary.activate()
     }
 
     func testAddHomeScreenWidget() throws {
@@ -226,9 +279,10 @@ final class LifeIsShortUITests: XCTestCase {
         app.activate()
     }
 
-    private func placeWidget(in home: XCUIApplication) {
-        let icon = home.icons["Life Is Short"]
-        XCTAssertTrue(icon.waitForExistence(timeout: 10))
+    private func placeWidget(in home: XCUIApplication, medium: Bool = false) {
+        let icons = home.icons.matching(identifier: "Life Is Short")
+        XCTAssertTrue(icons.firstMatch.waitForExistence(timeout: 10))
+        let icon = icons.allElementsBoundByIndex.first { $0.frame.width < 100 && $0.isHittable } ?? icons.firstMatch
         icon.press(forDuration: 1.5)
 
         let edit = home.buttons["Edit Home Screen"]
@@ -247,7 +301,13 @@ final class LifeIsShortUITests: XCTestCase {
         let result = home.cells["Life Is Short"]
         XCTAssertTrue(result.waitForExistence(timeout: 5), home.debugDescription)
         result.tap()
-        capture("Widget gallery", app: home)
+        if medium {
+            let preview = home.buttons.matching(NSPredicate(format: "value == %@", "Widget, Small")).firstMatch
+            XCTAssertTrue(preview.waitForExistence(timeout: 5), home.debugDescription)
+            preview.swipeLeft()
+            XCTAssertTrue(home.buttons.matching(NSPredicate(format: "value == %@", "Widget, Medium")).firstMatch.waitForExistence(timeout: 5), home.debugDescription)
+        }
+        capture(medium ? "Medium widget gallery" : "Widget gallery", app: home)
         let addWidget = home.buttons.matching(NSPredicate(format: "label ENDSWITH %@", "Add Widget")).firstMatch
         XCTAssertTrue(addWidget.waitForExistence(timeout: 5), home.debugDescription)
         addWidget.tap()
