@@ -4,13 +4,13 @@ Status: Implementation design; development authorized on 2026-10-25
 
 The confirmed product requirements are in [requirements.md](requirements.md). Architecture and interface choices below are proposals unless that document identifies them as confirmed requirements.
 
-## Existing repository
+## Repository baseline before implementation
 
 - A SwiftUI app target exists with an initial greeting screen.
 - The deployment target is iOS 27.0.
 - The project currently lists both iPhone and iPad device families; the intended v0.1 product scope is iPhone.
 - There is no widget extension, persistence layer, string catalog, test target, or CI workflow yet.
-- GitHub requires PRs for changes to `main`, including administrators, and blocks force pushes and branch deletion on `main`. Required CI checks have not been configured yet.
+- GitHub required PRs for changes to `main`, including administrators, and blocked force pushes and branch deletion on `main`. CI was added during implementation; the successful `Validate` check is now required.
 
 ## User experience
 
@@ -54,7 +54,7 @@ Prioritize photo, title, and countdown legibility. Use a restrained contrast tre
 
 Use a widget link to open the milestone list, as confirmed in R-04. This destination is independent of the displayed milestone and must work on a cold start or when that milestone no longer exists.
 
-## Proposed architecture
+## Implemented architecture
 
 Keep a small shared domain layer and separate app and widget entry points. Avoid a third-party dependency unless a concrete requirement cannot be met with Apple frameworks.
 
@@ -107,7 +107,7 @@ Search and filtering are useful future interface options as the library grows; t
 - When a referenced image is unavailable, show the built-in background and preserve the title/countdown.
 - Do not retain image location metadata for this feature or send selected photos to an application service.
 
-App Group identifiers and signing configuration remain project setup tasks. Do not place credentials or personal photos in Git.
+The app and widget share `group.com.pumpkinpietea.LifeIsShort`. Physical-device provisioning requires a development team with that App Group capability. Do not place credentials or personal photos in Git.
 
 ## Time semantics
 
@@ -155,6 +155,14 @@ The first code investigation, only after implementation is authorized, must veri
 
 If the requested presentation cannot be achieved with supported system mechanisms, bring that specific limitation back for a product decision. Do not silently drop days, use an approximate yearly conversion, add a backend, or make an every-second timeline reload loop.
 
+### Runtime rendering decision
+
+The iOS 27 simulator rejected an app-defined `DiscreteFormatStyle` inside a widget view archive (`noType` in WidgetRenderer). Compilation and app previews had succeeded, so a simulator Home Screen check was essential.
+
+The implemented widget uses only Apple-defined live timer formatting. Whole-unit values and the total-day field are calculated at each prepared entry date. `PresentationSchedule` merges rotation dates with whole-unit changes, target instants, day changes, and the few boundaries where the native timer omits a leading zero field. The native bounded timer renders seconds between those entries and stops at zero without extension execution. Leading zero prefixes retain the requested `HH:MM:SS` presentation. The application preview can use the shared custom discrete formatter because it runs inside the app process.
+
+This preserves total 24-hour days and the clock remainder without per-second timeline entries. The planned 24-hour timeline is renewed by WidgetKit. As with milestone rotation, an OS-delayed timeline transition can temporarily retain the previous whole-unit/day value or leading-zero layout; the bounded timer never counts upward or becomes negative. Real-device scheduling and reduced-update behavior remain distribution validation items.
+
 ## Localization and accessibility
 
 - Use an English development/fallback localization with Japanese and Indonesian translations.
@@ -180,7 +188,7 @@ If the requested presentation cannot be achieved with supported system mechanism
 | Device behavior | Observed rotation timing, settings updates, device-zone changes, and relevant app/widget lifecycle cases on iPhone |
 | Delivery | Relevant build/tests and PR evidence, followed later by separately verified App Store release |
 
-No application checks in this table have passed yet. Mockups and simulator previews alone cannot establish real-device widget scheduling behavior.
+See [tasks.md](tasks.md) for completed checks and remaining device/distribution work. Simulator evidence does not establish real-device widget scheduling behavior.
 
 ## SDD and PR workflow
 
